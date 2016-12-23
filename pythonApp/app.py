@@ -69,13 +69,13 @@ def draw_everything():
     fgc = "#d9d9d9" if night_mode else "#2b2b2b"
     image_path = NIGHT_IMAGE_PATH if night_mode else DAY_IMAGE_PATH
     root.configure(bg=bgc)
-    root.minsize(width=800, height=472)
+    root.minsize(width=796, height=472)
     root.resizable(width=False, height=False)
     root.title("carPi GUI")
 
     status_frame = Frame(root, bg=bgc)
     status_frame.grid(row=0, column=0)
-    status_frame.columnconfigure(1, minsize=556)
+    status_frame.columnconfigure(1, minsize=552)
     night_mode_image = PhotoImage(file=image_path + "night-mode.gif")
     power_off_image = PhotoImage(file=image_path + "power.gif")
     Button(status_frame, command=night_mode_toggle, image=night_mode_image).grid(row=0, column=0)
@@ -83,7 +83,7 @@ def draw_everything():
     Button(status_frame, command=power_off, image=power_off_image).grid(row=0, column=2)
     update_clock()  # FIXME:  breaks on night mode switch
 
-    scale = Scale(root, command=change_vol, orient=HORIZONTAL, bg=bgc, length=798, sliderlength=75, width=50, fg=fgc, font=("Arial", 12))
+    scale = Scale(root, command=change_vol, orient=HORIZONTAL, bg=bgc, length=794, sliderlength=75, width=50, fg=fgc, font=("Arial", 12))
     scale.grid(row=1, column=0)
 
     Label(root, textvariable=song_info, bg=bgc, fg=fgc, font=("Arial", 16)).grid(row=2, column=0)
@@ -98,7 +98,7 @@ def draw_everything():
     next_image = PhotoImage(file=image_path + "fast-forward.gif")
     Button(control_frame, command=prev, image=prev_image).grid(row=0, column=0)
     Button(control_frame, command=play, image=play_image).grid(row=0, column=1)
-    Button(control_frame, command=pause, image=pause_image).grid(row=0, column=2)
+#    Button(control_frame, command=pause, image=pause_image).grid(row=0, column=2)
     Button(control_frame, command=next, image=next_image).grid(row=0, column=3)
 
     root.mainloop()
