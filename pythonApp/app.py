@@ -49,7 +49,11 @@ def update_song_info():
     (title, x) = Popen(["rhythmbox-client", "--print-playing-format=%tt"], stdout=PIPE).communicate()
     (album, x) = Popen(["rhythmbox-client", "--print-playing-format=%at"], stdout=PIPE).communicate()
     (artist, x) = Popen(["rhythmbox-client", "--print-playing-format=%ta"], stdout=PIPE).communicate()
-    song_info.set(str(title) + "\n" + str(album) + "\n" + str(artist))
+    title, album, artist = str(title).strip(" \n"), str(album).strip(" \n"), str(artist).strip(" \n")
+    song_info.set("\n\n[No Data]\n\n"
+                  if title == "" and album == "" and artist == ""
+                  else "\n" + title + "\n" + album + "\n" + artist + "\n")
+    print(title)
     root.after(100, update_song_info)
 
 
@@ -66,8 +70,9 @@ def draw_everything():
     fgc = "#d9d9d9" if night_mode else "#2b2b2b"
     image_path = NIGHT_IMAGE_PATH if night_mode else DAY_IMAGE_PATH
     root.configure(bg=bgc)
-    root.minsize(width=800, height=600)
+    root.minsize(width=800, height=472)
     root.resizable(width=False, height=False)
+    root.title("carPi GUI")
 
     status_frame = Frame(root, bg=bgc)
     status_frame.grid(row=0, column=0)
@@ -75,18 +80,16 @@ def draw_everything():
     night_mode_image = PhotoImage(file=image_path + "night-mode.gif")
     power_off_image = PhotoImage(file=image_path + "power.gif")
     Button(status_frame, command=night_mode_toggle, image=night_mode_image).grid(row=0, column=0)
-    time_label = Label(status_frame, textvariable=clock_time, bg=bgc, fg=fgc)
-    time_label.config(font=("Monospace", 48))
-    time_label.grid(row=0, column=1)
+    Label(status_frame, textvariable=clock_time, bg=bgc, fg=fgc, font=("Arial", 52)).grid(row=0, column=1)
     Button(status_frame, command=power_off, image=power_off_image).grid(row=0, column=2)
     run_clock()  # FIXME:  breaks on night mode switch
 
-    scale = Scale(root, command=change_vol, orient=HORIZONTAL, bg=bgc, length=798, sliderlength=75, width=50, fg=fgc)
+    scale = Scale(root, command=change_vol, orient=HORIZONTAL, bg=bgc, length=798, sliderlength=75, width=50, fg=fgc, font=("Arial", 12))
     scale.grid(row=1, column=0)
 
-    # TODO:  Add track info/shuffle/repeat
-    # Label(root, textvariable=song_info, bg=bgc, fg=fgc, width=50).pack(side=BOTTOM)
-    # root.after(100, update_song_info)
+    Label(root, textvariable=song_info, bg=bgc, fg=fgc, font=("Arial", 16)).grid(row=2, column=0)
+    update_song_info()  # FIXME:  breaks on night mode switch
+    # TODO:  Add some kind of progress bar
 
     control_frame = Frame(root, bg=bgc)
     control_frame.grid(row=3, column=0)
