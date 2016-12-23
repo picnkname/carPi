@@ -53,7 +53,6 @@ def update_song_info():
     song_info.set("\n\n[No Data]\n\n"
                   if title == "" and album == "" and artist == ""
                   else "\n" + title + "\n" + album + "\n" + artist + "\n")
-    print(title)
     root.after(100, update_song_info)
 
 
