@@ -42,10 +42,15 @@ def night_mode_toggle():
     night_mode = not night_mode
     root.destroy()
     root = Tk()
-    draw_everything()
+    draw_everything(True)
 
 
-def update_song_info():
+def update_clock():
+    clock_time.set(time.strftime("%I:%M:%S"))
+    root.after(1000, run_clock)
+
+
+def update_track_info():
     (title, x) = Popen(["rhythmbox-client", "--print-playing-format=%tt"], stdout=PIPE).communicate()
     (album, x) = Popen(["rhythmbox-client", "--print-playing-format=%at"], stdout=PIPE).communicate()
     (artist, x) = Popen(["rhythmbox-client", "--print-playing-format=%ta"], stdout=PIPE).communicate()
@@ -53,12 +58,7 @@ def update_song_info():
     song_info.set("\n\n[No Data]\n\n"
                   if title == "" and album == "" and artist == ""
                   else "\n" + title + "\n" + album + "\n" + artist + "\n")
-    root.after(100, update_song_info)
-
-
-def run_clock():
-    clock_time.set(time.strftime("%I:%M:%S"))
-    root.after(1000, run_clock)
+    root.after(250, update_track_info)
 
 
 def draw_everything():
@@ -81,13 +81,13 @@ def draw_everything():
     Button(status_frame, command=night_mode_toggle, image=night_mode_image).grid(row=0, column=0)
     Label(status_frame, textvariable=clock_time, bg=bgc, fg=fgc, font=("Arial", 52)).grid(row=0, column=1)
     Button(status_frame, command=power_off, image=power_off_image).grid(row=0, column=2)
-    run_clock()  # FIXME:  breaks on night mode switch
+    update_clock()  # FIXME:  breaks on night mode switch
 
     scale = Scale(root, command=change_vol, orient=HORIZONTAL, bg=bgc, length=798, sliderlength=75, width=50, fg=fgc, font=("Arial", 12))
     scale.grid(row=1, column=0)
 
     Label(root, textvariable=song_info, bg=bgc, fg=fgc, font=("Arial", 16)).grid(row=2, column=0)
-    update_song_info()  # FIXME:  breaks on night mode switch
+    update_track_info()  # FIXME:  breaks on night mode switch
     # TODO:  Add some kind of progress bar
 
     control_frame = Frame(root, bg=bgc)
@@ -104,4 +104,4 @@ def draw_everything():
     root.mainloop()
 
 
-draw_everything()
+draw_everything(False)
