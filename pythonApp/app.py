@@ -98,7 +98,7 @@ def draw_everything():
     next_image = PhotoImage(file=image_path + "fast-forward.gif")
     Button(control_frame, command=prev, image=prev_image).grid(row=0, column=0)
     Button(control_frame, command=play, image=play_image).grid(row=0, column=1)
-#    Button(control_frame, command=pause, image=pause_image).grid(row=0, column=2)
+    Button(control_frame, command=pause, image=pause_image).grid(row=0, column=2)
     Button(control_frame, command=next, image=next_image).grid(row=0, column=3)
 
     root.mainloop()
