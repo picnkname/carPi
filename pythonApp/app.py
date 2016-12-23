@@ -55,9 +55,10 @@ def update_track_info():
     (album, x) = Popen(["rhythmbox-client", "--print-playing-format=%at"], stdout=PIPE).communicate()
     (artist, x) = Popen(["rhythmbox-client", "--print-playing-format=%ta"], stdout=PIPE).communicate()
     title, album, artist = str(title).strip(" \n"), str(album).strip(" \n"), str(artist).strip(" \n")
-    song_info.set("\n\n[No Data]\n\n"
-                  if title == "" and album == "" and artist == ""
-                  else "\n" + title + "\n" + album + "\n" + artist + "\n")
+    song_info.set("\n" +
+                  ("[No Title Data]\n" if title == "" else title + "\n") +
+                  ("[No Album Data]\n" if album == "" else album + "\n") +
+                  ("[No Artist Data]\n" if artist == "" else artist + "\n"))
     root.after(250, update_track_info)
 
 

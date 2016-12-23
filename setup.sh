@@ -2,7 +2,6 @@
 
 # All of the commands to run to install everything on the pi and my general notes until it makes its way into the readme
 # Created by Wesley Van Pelt on 2016-12-05
-# Last Modified By Wesley Van Pelt on 2016-12-05
 
 # Just the command to image the SD card on Mac OS so I dont have to keep looking it up
 # sudo dd bs=1m if=rasp-lite.img of=/dev/rdiskX
@@ -25,6 +24,8 @@ sudo apt-get install htop mate-core mate-desktop-environment xinit xinput python
 
 # Put in "/etc/NetworkManager/NetworkManager.conf" and "/etc/NetworkManager/NetworkManager.conf"
 # Change screensaver settings, wifi/network settings, time, and add startup.sh to the startup stuff in settings
+# I had to change timezone settings:
+sudo cp /usr/share/zoneinfo/America/Indiana/Indianapolis /etc/localtime
 
 # Clean up since we're done
 sudo apt-get clean
