@@ -5,7 +5,6 @@ import time
 
 DAY_IMAGE_PATH = "images-day/"
 NIGHT_IMAGE_PATH = "images-night/"
-MEDIA_SUB_PATH = "mediacontrols/"
 
 night_mode = False
 root = Tk()
@@ -65,40 +64,40 @@ def draw_everything():
 
     bgc = "#2b2b2b" if night_mode else "#d9d9d9"
     fgc = "#d9d9d9" if night_mode else "#2b2b2b"
+    image_path = NIGHT_IMAGE_PATH if night_mode else DAY_IMAGE_PATH
     root.configure(bg=bgc)
     root.minsize(width=800, height=600)
     root.resizable(width=False, height=False)
 
     status_frame = Frame(root, bg=bgc)
     status_frame.grid(row=0, column=0)
-    status_frame.columnconfigure(1, minsize=540)
-    night_mode_image = PhotoImage(file=(NIGHT_IMAGE_PATH if night_mode else DAY_IMAGE_PATH) + "night-mode.gif")
-    power_off_image = PhotoImage(file=(NIGHT_IMAGE_PATH if night_mode else DAY_IMAGE_PATH) + "power.gif")
+    status_frame.columnconfigure(1, minsize=556)
+    night_mode_image = PhotoImage(file=image_path + "night-mode.gif")
+    power_off_image = PhotoImage(file=image_path + "power.gif")
     Button(status_frame, command=night_mode_toggle, image=night_mode_image).grid(row=0, column=0)
     time_label = Label(status_frame, textvariable=clock_time, bg=bgc, fg=fgc)
     time_label.config(font=("Monospace", 48))
     time_label.grid(row=0, column=1)
     Button(status_frame, command=power_off, image=power_off_image).grid(row=0, column=2)
-    run_clock()  # FIXME: breaks on night mode switch
+    run_clock()  # FIXME:  breaks on night mode switch
 
-    scale = Scale(root, command=change_vol, orient=HORIZONTAL, bg=bgc, length=800, sliderlength=75, width=50, fg=fgc)
+    scale = Scale(root, command=change_vol, orient=HORIZONTAL, bg=bgc, length=798, sliderlength=75, width=50, fg=fgc)
     scale.grid(row=1, column=0)
 
-    # bottom_frame = Frame(root, bg=bgc)
+    # TODO:  Add track info/shuffle/repeat
     # Label(root, textvariable=song_info, bg=bgc, fg=fgc, width=50).pack(side=BOTTOM)
     # root.after(100, update_song_info)
-    # bottom_frame.pack(anchor=CENTER)
-    # z = 6  # Just some scaling number for the images
-    # media_image_path = (NIGHT_IMAGE_PATH if night_mode else DAY_IMAGE_PATH) + MEDIA_SUB_PATH
-    # prev_image = PhotoImage(file=media_image_path + "rewind.gif").subsample(z, z)
-    # play_image = PhotoImage(file=media_image_path + "play.gif").subsample(z, z)
-    # pause_image = PhotoImage(file=media_image_path + "pause.gif").subsample(z, z)
-    # next_image = PhotoImage(file=media_image_path + "fast-forward.gif").subsample(z, z)
-    # Button(bottom_frame, command=prev, image=prev_image).pack(side=LEFT)
-    # Button(bottom_frame, command=play, image=play_image).pack(side=LEFT)
-    # Button(bottom_frame, command=pause, image=pause_image).pack(side=LEFT)
-    # Button(bottom_frame, command=next, image=next_image).pack(side=LEFT)
 
+    control_frame = Frame(root, bg=bgc)
+    control_frame.grid(row=3, column=0)
+    prev_image = PhotoImage(file=image_path + "rewind.gif")
+    play_image = PhotoImage(file=image_path + "play.gif")
+    pause_image = PhotoImage(file=image_path + "pause.gif")
+    next_image = PhotoImage(file=image_path + "fast-forward.gif")
+    Button(control_frame, command=prev, image=prev_image).grid(row=0, column=0)
+    Button(control_frame, command=play, image=play_image).grid(row=0, column=1)
+    Button(control_frame, command=pause, image=pause_image).grid(row=0, column=2)
+    Button(control_frame, command=next, image=next_image).grid(row=0, column=3)
 
     root.mainloop()
 
