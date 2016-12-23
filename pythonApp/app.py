@@ -42,12 +42,12 @@ def night_mode_toggle():
     night_mode = not night_mode
     root.destroy()
     root = Tk()
-    draw_everything(True)
+    draw_everything()
 
 
 def update_clock():
     clock_time.set(time.strftime("%I:%M:%S"))
-    root.after(1000, run_clock)
+    root.after(1000, update_clock)
 
 
 def update_track_info():
@@ -104,4 +104,4 @@ def draw_everything():
     root.mainloop()
 
 
-draw_everything(False)
+draw_everything()
