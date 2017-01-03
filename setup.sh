@@ -12,7 +12,7 @@
 
 # Add the file "/etc/systemd/system/getty@tty1.service.d/autologin.conf" for autologin
 
-# Install htop, MATE, xinit, xinput, tkinter, rhythmbox, screenfetch, git, network-manager-gnome
+# Install the required stuff
 sudo apt-get update
 sudo apt-get upgrade
 sudo apt-get install htop mate-core mate-desktop-environment xinit xinput python-tk rhythmbox screenfetch git network-manager-gnome
@@ -26,6 +26,8 @@ sudo apt-get install htop mate-core mate-desktop-environment xinit xinput python
 # Change screensaver settings, wifi/network settings, time, and add startup.sh to the startup stuff in settings
 # I had to change timezone settings:
 sudo cp /usr/share/zoneinfo/America/Indiana/Indianapolis /etc/localtime
+
+# My cell dongle seemed to just work after going through and using the default settings in network manager and the renaming the device
 
 # Clean up since we're done
 sudo apt-get clean

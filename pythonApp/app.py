@@ -6,13 +6,16 @@ import time
 DAY_IMAGE_PATH = "images-day/"
 NIGHT_IMAGE_PATH = "images-night/"
 
-night_mode = False
+night_mode = True
 root = Tk()
 song_info = StringVar()
 clock_time = StringVar()
 
 
 def change_vol(new_vol):
+    # The USB sound card for my pi does not output sound if it is below 25%
+    # This scales it so there's a still a 0%-100% available to the user
+    new_vol = (new_vol - 24) * 1.3157894737 if new_vol > 24 else 0
     call(["amixer", "-D", "pulse", "sset", "Master", str(new_vol) + "%"])
 
 
