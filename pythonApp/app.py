@@ -2,140 +2,138 @@ from tkinter import *
 import subprocess as sp
 import time
 
-import mediaPlayer as mp
+import mediaPlayer as mediaPlayer
 
 
 IMAGE_PATH = "images/"
 BACKGROUND_COLOR = "#2b2b2b"
 FOREGROUND_COLOR = "#d9d9d9"
 
-root = Tk()
-song_info = StringVar()
-clock_time = StringVar()
-hotspot = False
-aux = False
-play = False
-hotspot_button = None
-aux_button = None
-play_pause_button = None
+
+class RootApp:
+    root = Tk()
+    mp = mediaPlayer.MediaPlayer()
+    song_info = StringVar()
+    clock_time = StringVar()
+    volume = 0
+    hotspot = False
+    aux = False
+    play = False
+    hotspot_button = None
+    aux_button = None
+    play_pause_button = None
 
 
-def toggle_hotspot():
-    global hotspot
-    global hotspot_button
-    hotspot = not hotspot
-    hotspot_button.config(image=PhotoImage(file=IMAGE_PATH + ("hotspot-on.gif" if hotspot else "hotspot-off.gif")))
-    draw_everything()
+    def __init__(self):
+        self.draw_everything(True)
 
 
-def update_clock():
-    clock_time.set(time.strftime("%I:%M:%S"))
-    root.after(1000, update_clock)
+    def toggle_hotspot(self):
+        self.hotspot = not self.hotspot
+        self.hotspot_button.config(image=PhotoImage(file=IMAGE_PATH + ("hotspot-on.gif" if self.hotspot else "hotspot-off.gif")))
+        self.draw_everything()
 
 
-def power_off():
-    sp.call(["sudo", "shutdown", "-h", "now"])
+    def update_clock(self):
+        self.clock_time.set(time.strftime("%I:%M:%S"))
+        self.root.after(1000, self.update_clock)
 
 
-def change_vol(new_vol):
-    # The USB sound card for my pi does not output sound if it is below 25%
-    # This scales it so there's a still a 0%-100% available to the user
-    new_vol = int(new_vol) * 0.75 + 25 if int(new_vol) > 0 else 0
-    sp.call(["amixer", "-D", "pulse", "sset", "Master", str(new_vol) + "%"])
+    @staticmethod
+    def power_off():
+        sp.call(["sudo", "shutdown", "-h", "now"])
 
 
-def update_track_info():
-    (title, album, artist) = mp.get_track_info()
-    song_info.set("\n" +
-                  ("[No Title Data]\n" if title == "" else title + "\n") +
-                  ("[No Album Data]\n" if album == "" else album + "\n") +
-                  ("[No Artist Data]\n" if artist == "" else artist + "\n"))
-    root.after(250, update_track_info)
+    def change_vol(self, new_vol):
+        self.volume = new_vol
+        # Note that my USB sound card doesn't output sound until 25%
+        # The sound slider is on a 0-63 scale
+        new_vol = 0 if int(new_vol) == 0 else (int(new_vol) - 1) * 1.22 + 25
+        sp.call(["amixer", "-D", "pulse", "sset", "Master", str(new_vol) + "%"])
 
 
-def show_mp():
-    return
+    def update_track_info(self):
+        (title, album, artist) = self.mp.get_track_info()
+        self.song_info.set("\n" +
+                           ("[No Title Data]\n" if title == "" else title + "\n") +
+                           ("[No Album Data]\n" if album == "" else album + "\n") +
+                           ("[No Artist Data]\n" if artist == "" else artist + "\n"))
+        self.root.after(250, self.update_track_info)
 
 
-def prev():
-    mp.prev()
+    def show_mp(self):
+        return
 
 
-def play_pause():
-    global play
-    global play_pause_button
-    play = not play
-    play_pause_button.config(image=PhotoImage(file=IMAGE_PATH + ("play.gif" if play else "pause.gif")))
-    if play:
-        mp.play()
-    else:
-        mp.pause()
-    draw_everything()
+    def prev(self):
+        self.mp.prev()
 
 
-def skip():
-    mp.skip()
+    def play_pause(self):
+        self.play = not self.play
+        self.play_pause_button.config(image=PhotoImage(file=IMAGE_PATH + ("play.gif" if self.play else "pause.gif")))
+        if self.play:
+            self.mp.play()
+        else:
+            self.mp.pause()
+        self.draw_everything()
 
 
-def toggle_aux():
-    global aux
-    global aux_button
-    aux = not aux
-    aux_button.config(image=PhotoImage(file=IMAGE_PATH + ("aux-on.gif" if aux else "aux-off.gif")))
-    draw_everything()
+    def skip(self):
+        self.mp.skip()
 
 
-def draw_everything(first_draw=False):
-    global root
-    global hotspot
-    global aux
-    global play
-    global hotspot_button
-    global aux_button
-    global play_pause_button
-
-    root.configure(bg=BACKGROUND_COLOR)
-    root.minsize(width=796, height=472)
-    root.resizable(width=False, height=False)
-    root.title("carPi GUI")
-
-    status_frame = Frame(root, bg=BACKGROUND_COLOR)
-    status_frame.grid(row=0, column=0)
-    status_frame.columnconfigure(1, minsize=552)
-    hotspot_image = PhotoImage(file=IMAGE_PATH + ("hotspot-on.gif" if hotspot else "hotspot-off.gif"))
-    power_off_image = PhotoImage(file=IMAGE_PATH + "power.gif")
-
-    hotspot_button = Button(status_frame, command=toggle_hotspot, image=hotspot_image)
-    hotspot_button.grid(row=0, column=0)
-    Label(status_frame, textvariable=clock_time, bg=BACKGROUND_COLOR, fg=FOREGROUND_COLOR, font=("Arial", 52)).grid(row=0, column=1)
-    Button(status_frame, command=power_off, image=power_off_image).grid(row=0, column=2)
-
-    scale = Scale(root, command=change_vol, orient=HORIZONTAL, bg=BACKGROUND_COLOR, length=794, sliderlength=100, width=75, fg=FOREGROUND_COLOR, font=("Arial", 12))
-    scale.grid(row=1, column=0)
-
-    Label(root, textvariable=song_info, bg=BACKGROUND_COLOR, fg=FOREGROUND_COLOR, font=("Arial", 16)).grid(row=2, column=0)
-    if first_draw:
-        update_clock()
-        update_track_info()
-    # TODO:  Add some kind of progress bar
-
-    control_frame = Frame(root, bg=BACKGROUND_COLOR)
-    control_frame.grid(row=3, column=0)
-
-    media_image = PhotoImage(file=IMAGE_PATH + "media.gif")
-    prev_image = PhotoImage(file=IMAGE_PATH + "rewind.gif")
-    skip_image = PhotoImage(file=IMAGE_PATH + "fast-forward.gif")
-    play_image = PhotoImage(file=IMAGE_PATH + ("play.gif" if play else "pause.gif"))
-    aux_image = PhotoImage(file=IMAGE_PATH + ("aux-on.gif" if aux else "aux-off.gif"))
-    Button(control_frame, command=show_mp, image=media_image).grid(row=0, column=0)
-    Button(control_frame, command=prev, image=prev_image).grid(row=0, column=1)
-    Button(control_frame, command=skip, image=skip_image).grid(row=0, column=3)
-    play_pause_button = Button(control_frame, command=play_pause, image=play_image)
-    aux_button = Button(control_frame, command=toggle_aux, image=aux_image)
-    play_pause_button.grid(row=0, column=2)
-    aux_button.grid(row=0, column=4)
-
-    root.mainloop()
+    def toggle_aux(self):
+        self.aux = not self.aux
+        self.aux_button.config(image=PhotoImage(file=IMAGE_PATH + ("aux-on.gif" if self.aux else "aux-off.gif")))
+        self.draw_everything()
 
 
-draw_everything(True)
+    def draw_everything(self, first_draw=False):
+        self.root.configure(bg=BACKGROUND_COLOR)
+        self.root.minsize(width=796, height=472)
+        self.root.resizable(width=False, height=False)
+        self.root.title("carPi GUI")
+
+        status_frame = Frame(self.root, bg=BACKGROUND_COLOR)
+        status_frame.grid(row=0, column=0)
+        status_frame.columnconfigure(1, minsize=552)
+        hotspot_image = PhotoImage(file=IMAGE_PATH + ("hotspot-on.gif" if self.hotspot else "hotspot-off.gif"))
+        power_off_image = PhotoImage(file=IMAGE_PATH + "power.gif")
+
+        self.hotspot_button = Button(status_frame, command=self.toggle_hotspot, image=hotspot_image)
+        self.hotspot_button.grid(row=0, column=0)
+        Label(status_frame, textvariable=self.clock_time, bg=BACKGROUND_COLOR, fg=FOREGROUND_COLOR, font=("Arial", 52)).grid(row=0, column=1)
+        Button(status_frame, command=self.power_off, image=power_off_image).grid(row=0, column=2)
+
+        scale = Scale(self.root, command=self.change_vol, orient=HORIZONTAL, bg=BACKGROUND_COLOR, length=794, sliderlength=100, width=75, fg=FOREGROUND_COLOR, to=63, repeatdelay=250, repeatinterval=1, font=("Arial", 12))
+        scale.set(self.volume)
+        scale.grid(row=1, column=0)
+        self.change_vol(self.volume)
+
+        Label(self.root, textvariable=self.song_info, bg=BACKGROUND_COLOR, fg=FOREGROUND_COLOR, font=("Arial", 16)).grid(row=2, column=0)
+        if first_draw:
+            self.update_clock()
+            self.update_track_info()
+        # TODO:  Add some kind of progress bar
+
+        control_frame = Frame(self.root, bg=BACKGROUND_COLOR)
+        control_frame.grid(row=3, column=0)
+
+        media_image = PhotoImage(file=IMAGE_PATH + "media.gif")
+        prev_image = PhotoImage(file=IMAGE_PATH + "rewind.gif")
+        skip_image = PhotoImage(file=IMAGE_PATH + "fast-forward.gif")
+        play_image = PhotoImage(file=IMAGE_PATH + ("play.gif" if self.play else "pause.gif"))
+        aux_image = PhotoImage(file=IMAGE_PATH + ("aux-on.gif" if self.aux else "aux-off.gif"))
+        Button(control_frame, command=self.show_mp, image=media_image).grid(row=0, column=0)
+        Button(control_frame, command=self.prev, image=prev_image).grid(row=0, column=1)
+        Button(control_frame, command=self.skip, image=skip_image).grid(row=0, column=3)
+        self.play_pause_button = Button(control_frame, command=self.play_pause, image=play_image)
+        self.aux_button = Button(control_frame, command=self.toggle_aux, image=aux_image)
+        self.play_pause_button.grid(row=0, column=2)
+        self.aux_button.grid(row=0, column=4)
+
+        self.root.mainloop()
+
+if __name__ == "__main__":
+    RootApp()
