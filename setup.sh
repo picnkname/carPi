@@ -31,3 +31,8 @@ sudo cp /usr/share/zoneinfo/America/Indiana/Indianapolis /etc/localtime
 
 # Clean up since we're done
 sudo apt-get clean
+
+
+# Navit stuff
+sudo apt-get install cmake zlib1g-dev libpng12-dev libgtk2.0-dev librsvg2-bin g++ gpsd gpsd-clients libgps-dev libdbus-glib-1-dev freeglut3-dev libxft-dev libglib2.0-dev libfreeimage-dev gettext
+git clone https://github.com/navit-gps/navit.git
