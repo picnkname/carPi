@@ -1,3 +1,4 @@
+from enum import Enum
 from tkinter import *
 import subprocess as sp
 import time
@@ -9,6 +10,8 @@ BACKGROUND_COLOR = "#2b2b2b"
 FOREGROUND_COLOR = "#d9d9d9"
 IMAGE_PATH = "images/"
 
+Aap = Enum("Aap", "ALL ALBUM PLAYLIST ARTIST")
+
 
 class RootApp:
     root = None
@@ -19,6 +22,7 @@ class RootApp:
     hotspot = False
     mp_controls = True
     aux = False
+    aap_mode = Aap.ALL
 
     status_frame = None
     hotspot_image = None
@@ -98,7 +102,16 @@ class RootApp:
         self.root.after(250, self.update_track_info)
 
     def toggle_mp_controls(self):
+        if self.mp_controls:
+            self.mp_control_frame.pack_forget()
+            self.mp_control_frame.destroy()
+            self.root.geometry("796x495")
+        else:
+            self.mp_control_frame = Frame(self.root, bg=BACKGROUND_COLOR)
+            self.mp_control_frame.pack(fill=BOTH)
+            self.root.geometry("796x1500")
         self.mp_controls = not self.mp_controls
+        self.draw_mp_buttons_controls_frame(True)
 
     def prev(self):
         self.mp.prev()
@@ -132,16 +145,20 @@ class RootApp:
         return
 
     def aap_all(self):
-        return
+        self.aap_mode = Aap.ALL
+        self.draw_mp_buttons_controls_frame()
 
     def aap_album(self):
-        return
+        self.aap_mode = Aap.ALBUM
+        self.draw_mp_buttons_controls_frame()
 
     def aap_playlist(self):
-        return
+        self.aap_mode = Aap.PLAYLIST
+        self.draw_mp_buttons_controls_frame()
 
     def aap_artist(self):
-        return
+        self.aap_mode = Aap.ARTIST
+        self.draw_mp_buttons_controls_frame()
 
     def draw_status_frame(self, first_draw=False):
         if not first_draw:
@@ -157,8 +174,8 @@ class RootApp:
         self.clock_label = Label(self.status_frame, textvariable=self.clock_time, bg=BACKGROUND_COLOR, fg=FOREGROUND_COLOR, font=("Arial", 52))
         self.power_button = Button(self.status_frame, command=self.power_off, image=self.power_off_image)
         self.hotspot_button.pack(side=LEFT)
-        self.clock_label.pack(side=LEFT)
         self.power_button.pack(side=RIGHT)
+        self.clock_label.pack(side=TOP, fill=BOTH)
 
     def draw_media_control_frame(self, first_draw=False):
         if not first_draw:
@@ -189,41 +206,75 @@ class RootApp:
         self.aux_button.pack(side=LEFT)
 
     def draw_mp_buttons_controls_frame(self, first_draw=False):
-        self.mp_buttons_controls_frame = Frame(self.mp_control_frame, bg=BACKGROUND_COLOR)
-        self.mp_buttons_controls_frame.pack(side=LEFT)
-        self.mp_pst_button_image    = PhotoImage(file=IMAGE_PATH + "playSelectedTrack.gif")
-        self.mp_psaapp_button_image = PhotoImage(file=IMAGE_PATH + "playSelectedPlaylist.gif")
-        self.mp_pst_button    = Button(self.mp_buttons_controls_frame, command=self.play_selected_track, image=self.mp_pst_button_image)
-        self.mp_psaapp_button = Button(self.mp_buttons_controls_frame, command=self.play_selected_aap,   image=self.mp_psaapp_button_image)
-        self.mp_pst_button.pack(fill=X)
-        self.mp_psaapp_button.pack(fill=X)
-        self.mp_sr_frame = Frame(self.mp_buttons_controls_frame, bg=BACKGROUND_COLOR)
-        self.mp_sr_frame.pack(fill=X)
-        # self.mp_shuffle_button_image = PhotoImage(file=IMAGE_PATH + "shuffle.gif")
-        # self.mp_repeat_button_image  = PhotoImage(file=IMAGE_PATH + "repeat.gif")
-        self.mp_shuffle_button = Button(self.mp_sr_frame, command=self.shuffle, text="Shuffle")
-        self.mp_repeat_button  = Button(self.mp_sr_frame, command=self.repeat,  text="Repeat")
-        self.mp_shuffle_button.pack(side=LEFT, fill=X, expand=True)
-        self.mp_repeat_button.pack(side=LEFT, fill=X, expand=True)
-        self.mp_artwork = Label(self.mp_buttons_controls_frame, text="\n[insert]\n[artwork]\n[here]\n")
-        self.mp_artwork.pack()
-        self.mp_aap_frame1 = Frame(self.mp_buttons_controls_frame, bg=BACKGROUND_COLOR)
-        self.mp_aap_frame2 = Frame(self.mp_buttons_controls_frame, bg=BACKGROUND_COLOR)
-        self.mp_aap_frame1.pack()
-        self.mp_aap_frame2.pack()
-        self.mp_aap_all_button_image      = PhotoImage(file=IMAGE_PATH + "aap-all.gif")
-        self.mp_aap_album_button_image    = PhotoImage(file=IMAGE_PATH + "aap-album.gif")
-        self.mp_aap_playlist_button_image = PhotoImage(file=IMAGE_PATH + "aap-playlist.gif")
-        self.mp_aap_artist_button_image   = PhotoImage(file=IMAGE_PATH + "aap-artist.gif")
-        self.mp_aap_all_button      = Button(self.mp_aap_frame1, command=self.aap_all,      image=self.mp_aap_all_button_image)
-        self.mp_aap_album_button    = Button(self.mp_aap_frame1, command=self.aap_album,    image=self.mp_aap_album_button_image)
-        self.mp_aap_playlist_button = Button(self.mp_aap_frame2, command=self.aap_playlist, image=self.mp_aap_playlist_button_image)
-        self.mp_aap_artist_button   = Button(self.mp_aap_frame2, command=self.aap_artist,   image=self.mp_aap_artist_button_image)
-        self.mp_aap_all_button.pack(side=LEFT)
-        self.mp_aap_album_button.pack(side=LEFT)
-        self.mp_aap_playlist_button.pack(side=LEFT)
-        self.mp_aap_artist_button.pack(side=LEFT)
+        if not first_draw:
+            self.mp_buttons_controls_frame.pack_forget()
+            self.mp_buttons_controls_frame.destroy()
+            self.mp_pst_button.pack_forget()
+            self.mp_pst_button.destroy()
+            self.mp_psaapp_button.pack_forget()
+            self.mp_psaapp_button.destroy()
+            self.mp_shuffle_button.pack_forget()
+            self.mp_shuffle_button.destroy()
+            self.mp_repeat_button.pack_forget()
+            self.mp_repeat_button.destroy()
+            self.mp_artwork.pack_forget()
+            self.mp_artwork.destroy()
+            self.mp_aap_frame1.pack_forget()
+            self.mp_aap_frame1.destroy()
+            self.mp_aap_frame2.pack_forget()
+            self.mp_aap_frame2.destroy()
+            self.mp_aap_all_button.pack_forget()
+            self.mp_aap_all_button.destroy()
+            self.mp_aap_album_button.pack_forget()
+            self.mp_aap_album_button.destroy()
+            self.mp_aap_playlist_button.pack_forget()
+            self.mp_aap_playlist_button.destroy()
+            self.mp_aap_artist_button.pack_forget()
+            self.mp_aap_artist_button.destroy()
+        if self.mp_controls:
+            self.mp_buttons_controls_frame = Frame(self.mp_control_frame, bg=BACKGROUND_COLOR)
+            self.mp_buttons_controls_frame.pack(side=LEFT)
+            self.mp_pst_button_image    = PhotoImage(file=IMAGE_PATH + "playSelectedTrack.gif")
+            self.mp_psaapp_button_image = PhotoImage(file=IMAGE_PATH + "playSelectedAll.gif")      if self.aap_mode == Aap.ALL      else \
+                                          PhotoImage(file=IMAGE_PATH + "playSelectedAlbum.gif")    if self.aap_mode == Aap.ALBUM    else \
+                                          PhotoImage(file=IMAGE_PATH + "playSelectedPlaylist.gif") if self.aap_mode == Aap.PLAYLIST else \
+                                          PhotoImage(file=IMAGE_PATH + "playSelectedArtist.gif")
+            self.mp_pst_button    = Button(self.mp_buttons_controls_frame, command=self.play_selected_track, image=self.mp_pst_button_image)
+            self.mp_psaapp_button = Button(self.mp_buttons_controls_frame, command=self.play_selected_aap,   image=self.mp_psaapp_button_image)
+            self.mp_pst_button.pack(fill=X)
+            self.mp_psaapp_button.pack(fill=X)
+            self.mp_sr_frame = Frame(self.mp_buttons_controls_frame, bg=BACKGROUND_COLOR)
+            self.mp_sr_frame.pack(fill=X)
+            # self.mp_shuffle_button_image = PhotoImage(file=IMAGE_PATH + "shuffle.gif")
+            # self.mp_repeat_button_image  = PhotoImage(file=IMAGE_PATH + "repeat.gif")
+            self.mp_shuffle_button = Button(self.mp_sr_frame, command=self.shuffle, text="Shuffle")
+            self.mp_repeat_button  = Button(self.mp_sr_frame, command=self.repeat,  text="Repeat")
+            self.mp_shuffle_button.pack(side=LEFT, fill=X, expand=True)
+            self.mp_repeat_button .pack(side=LEFT, fill=X, expand=True)
+            self.mp_artwork = Label(self.mp_buttons_controls_frame, text="\n[insert]\n[artwork]\n[here]\n")
+            self.mp_artwork.pack()
+            self.mp_aap_frame1 = Frame(self.mp_buttons_controls_frame, bg=BACKGROUND_COLOR)
+            self.mp_aap_frame2 = Frame(self.mp_buttons_controls_frame, bg=BACKGROUND_COLOR)
+            self.mp_aap_frame1.pack()
+            self.mp_aap_frame2.pack()
+            self.mp_aap_all_button_image      = PhotoImage(file=IMAGE_PATH + "aap-all.gif")
+            self.mp_aap_album_button_image    = PhotoImage(file=IMAGE_PATH + "aap-album.gif")
+            self.mp_aap_playlist_button_image = PhotoImage(file=IMAGE_PATH + "aap-playlist.gif")
+            self.mp_aap_artist_button_image   = PhotoImage(file=IMAGE_PATH + "aap-artist.gif")
+            self.mp_aap_all_button      = Button(self.mp_aap_frame1, command=self.aap_all,      image=self.mp_aap_all_button_image)
+            self.mp_aap_album_button    = Button(self.mp_aap_frame1, command=self.aap_album,    image=self.mp_aap_album_button_image)
+            self.mp_aap_playlist_button = Button(self.mp_aap_frame2, command=self.aap_playlist, image=self.mp_aap_playlist_button_image)
+            self.mp_aap_artist_button   = Button(self.mp_aap_frame2, command=self.aap_artist,   image=self.mp_aap_artist_button_image)
+            self.mp_aap_all_button     .pack(side=LEFT)
+            self.mp_aap_album_button   .pack(side=LEFT)
+            self.mp_aap_playlist_button.pack(side=LEFT)
+            self.mp_aap_artist_button  .pack(side=LEFT)
+        if first_draw and self.mp_controls:
+            self.draw_mp_listboxes()
 
+    def draw_mp_listboxes(self):
+        Listbox(self.mp_control_frame, width=36, height=100, bg=BACKGROUND_COLOR, fg=FOREGROUND_COLOR).pack(side=RIGHT, fill=Y)
+        Listbox(self.mp_control_frame, width=36, height=100, bg=BACKGROUND_COLOR, fg=FOREGROUND_COLOR).pack(side=RIGHT, fill=Y)
 
     def draw_everything(self, first_draw=False):
         self.root.configure(bg=BACKGROUND_COLOR)
@@ -255,9 +306,7 @@ class RootApp:
 
         if self.mp_controls:
             self.mp_control_frame = Frame(self.root, bg=BACKGROUND_COLOR)
-            self.mp_control_frame.pack(fill=Y)
-            Listbox(self.mp_control_frame, width=36, height=100, bg=BACKGROUND_COLOR, fg=FOREGROUND_COLOR).pack(side=RIGHT, fill=Y)
-            Listbox(self.mp_control_frame, width=36, bg=BACKGROUND_COLOR, fg=FOREGROUND_COLOR).pack(side=RIGHT, fill=Y)
+            self.mp_control_frame.pack(fill=BOTH)
             self.draw_mp_buttons_controls_frame(first_draw)
 
         self.root.mainloop()

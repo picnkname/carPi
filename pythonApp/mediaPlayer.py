@@ -19,11 +19,11 @@ class MediaPlayer:
 
     def play(self):
         self.paused = False
-        self.current_track.play()
+        # self.current_track.play()
 
     def pause(self):
         self.paused = True
-        self.current_track.pause()
+        # self.current_track.pause()
 
     def skip(self):
         return
