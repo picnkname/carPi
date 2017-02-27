@@ -27,6 +27,7 @@ class RootApp:
     aap_mode = Aap.ALL
     shuffle_mode = False
     repeat_mode = RepeatMode.OFF
+    tracklist_update_delay = 0
 
     status_frame = None
     hotspot_image = None
@@ -71,6 +72,11 @@ class RootApp:
     mp_aap_artist_button_image = None
     mp_aap_artist_button = None
 
+    mp_aap_listbox = None
+    mp_aap_listbox_scrollbar = None
+    mp_aap_tracks_listbox = None
+    mp_aap_tracks_listbox_scrollbar = None
+
 
     def __init__(self):
         global IMAGE_PATH
@@ -78,21 +84,22 @@ class RootApp:
         global FOREGROUND_COLOR
 
         defaults = json.load(open("defaults.json"))
-        IMAGE_PATH        = defaults["image path"]
-        BACKGROUND_COLOR  = defaults["background color"]
-        FOREGROUND_COLOR  = defaults["foreground color"]
-        self.use_defaults = defaults["use defaults"]
-        self.hotspot      = defaults["hotspot"]
-        self.aux          = defaults["aux"]
-        self.mp_controls  = defaults["show mp"]
-        self.shuffle_mode = defaults["shuffle"]
-        self.aap_mode     = Aap.ALL      if defaults["menu mode"] == "ALL"      else \
-                            Aap.ALBUM    if defaults["menu mode"] == "ALBUM"    else \
-                            Aap.PLAYLIST if defaults["menu mode"] == "PLAYLIST" else \
-                            Aap.ARTIST
-        self.repeat_mode  = RepeatMode.ALL if defaults["repeat"] == "ALL" else \
-                            RepeatMode.OFF if defaults["repeat"] == "OFF" else \
-                            RepeatMode.ONE
+        IMAGE_PATH          = defaults["image path"]
+        BACKGROUND_COLOR    = defaults["background color"]
+        FOREGROUND_COLOR    = defaults["foreground color"]
+        self.use_defaults   = defaults["use defaults"]
+        self.hotspot        = defaults["hotspot"]
+        self.aux            = defaults["aux"]
+        self.mp_controls    = defaults["show mp"]
+        self.shuffle_mode   = defaults["shuffle"]
+        self.track_up_delay = defaults["tracklist update delay"]
+        self.aap_mode       = Aap.ALL      if defaults["menu mode"] == "ALL"      else \
+                              Aap.ALBUM    if defaults["menu mode"] == "ALBUM"    else \
+                              Aap.PLAYLIST if defaults["menu mode"] == "PLAYLIST" else \
+                              Aap.ARTIST
+        self.repeat_mode    = RepeatMode.ALL if defaults["repeat"] == "ALL" else \
+                              RepeatMode.OFF if defaults["repeat"] == "OFF" else \
+                              RepeatMode.ONE
         self.change_vol(defaults["volume"])
         self.mp = mediaPlayer.MediaPlayer(defaults["music path"], defaults["play"])
         self.root = Tk()
@@ -157,10 +164,13 @@ class RootApp:
         self.draw_media_control_frame()
 
     def play_selected_track(self):
-        return
+        self.mp.play_track(self.mp_aap_listbox.get(ACTIVE), self.mp_aap_tracks_listbox.get(ACTIVE))
 
     def play_selected_aap(self):
-        return
+        if self.aap_mode == Aap.ALBUM:
+            self.mp.play_album(self.mp_aap_listbox.get(ACTIVE))
+        else:
+            self.mp.play_playlist(None if self.aap_mode == Aap.ALL else self.mp_aap_listbox.get(ACTIVE), self.aap_mode == Aap.ARTIST)
 
     def shuffle(self):
         self.shuffle_mode = not self.shuffle_mode
@@ -175,18 +185,43 @@ class RootApp:
     def aap_all(self):
         self.aap_mode = Aap.ALL
         self.draw_mp_buttons_controls_frame()
+        self.mp_aap_listbox.delete(0, END)
+        self.mp_aap_tracks_listbox.delete(0, END)
+        for name in self.mp.get_all_tracks():
+            self.mp_aap_tracks_listbox.insert(END, name)
 
     def aap_album(self):
         self.aap_mode = Aap.ALBUM
         self.draw_mp_buttons_controls_frame()
+        self.mp_aap_listbox.delete(0, END)
+        self.mp_aap_tracks_listbox.delete(0, END)
+        for name in self.mp.get_albums():
+            self.mp_aap_listbox.insert(END, name)
 
     def aap_playlist(self):
         self.aap_mode = Aap.PLAYLIST
         self.draw_mp_buttons_controls_frame()
+        self.mp_aap_listbox.delete(0, END)
+        self.mp_aap_tracks_listbox.delete(0, END)
+        for name in self.mp.get_playlists():
+            self.mp_aap_listbox.insert(END, name)
 
     def aap_artist(self):
         self.aap_mode = Aap.ARTIST
         self.draw_mp_buttons_controls_frame()
+        self.mp_aap_listbox.delete(0, END)
+        self.mp_aap_tracks_listbox.delete(0, END)
+        for name in self.mp.get_playlists(True):
+            self.mp_aap_listbox.insert(END, name)
+
+    def update_aap_track_listbox_content(self):
+        self.mp_aap_tracks_listbox.delete(0, END)
+        for track in self.mp.get_album_tracks(self.mp_aap_listbox.get(ACTIVE)) if self.aap_mode == Aap.ALBUM else \
+                     self.mp.get_playlist_tracks(self.mp_aap_listbox.get(ACTIVE), self.aap_mode == Aap.ARTIST):
+            self.mp_aap_tracks_listbox.insert(END, track)
+
+    def switch_aap_track_listbox_content(self, _):
+        self.root.after(25, self.update_aap_track_listbox_content)
 
     def draw_status_frame(self, first_draw=False):
         if not first_draw:
@@ -305,8 +340,26 @@ class RootApp:
             self.draw_mp_listboxes()
 
     def draw_mp_listboxes(self):
-        Listbox(self.mp_control_frame, width=36, height=100, bg=BACKGROUND_COLOR, fg=FOREGROUND_COLOR).pack(side=RIGHT, fill=Y)
-        Listbox(self.mp_control_frame, width=36, height=100, bg=BACKGROUND_COLOR, fg=FOREGROUND_COLOR).pack(side=RIGHT, fill=Y)
+        self.mp_aap_listbox_scrollbar        = Scrollbar(self.mp_control_frame, orient=VERTICAL, width=30, bg=BACKGROUND_COLOR, highlightcolor=FOREGROUND_COLOR)
+        self.mp_aap_tracks_listbox_scrollbar = Scrollbar(self.mp_control_frame, orient=VERTICAL, width=30, bg=BACKGROUND_COLOR, highlightcolor=FOREGROUND_COLOR)
+        self.mp_aap_listbox        = Listbox(self.mp_control_frame, yscrollcommand=self.mp_aap_listbox_scrollbar.set,        width=26, height=100, bg=BACKGROUND_COLOR, fg=FOREGROUND_COLOR, font=("Arial", 14))
+        self.mp_aap_tracks_listbox = Listbox(self.mp_control_frame, yscrollcommand=self.mp_aap_tracks_listbox_scrollbar.set, width=25, height=100, bg=BACKGROUND_COLOR, fg=FOREGROUND_COLOR, font=("Arial", 14))
+        self.mp_aap_listbox.bind("<ButtonRelease-1>", self.switch_aap_track_listbox_content)
+        self.mp_aap_tracks_listbox_scrollbar.config(command=self.mp_aap_tracks_listbox.yview)
+        self.mp_aap_listbox_scrollbar       .config(command=self.mp_aap_listbox.yview)
+        self.mp_aap_tracks_listbox_scrollbar.pack(side=RIGHT, fill=Y)
+        self.mp_aap_tracks_listbox          .pack(side=RIGHT, fill=Y)
+        self.mp_aap_listbox_scrollbar       .pack(side=RIGHT, fill=Y)
+        self.mp_aap_listbox                 .pack(side=RIGHT, fill=Y)
+        if self.aap_mode == Aap.ALBUM:
+            self.aap_album()
+        elif self.aap_mode == Aap.PLAYLIST:
+            self.aap_playlist()
+        elif self.aap_mode == Aap.ARTIST:
+            self.aap_artist()
+        else:
+            for track in self.mp.get_all_tracks():
+                self.mp_aap_tracks_listbox.insert(END, track)
 
     def draw_everything(self, first_draw=False):
         self.root.configure(bg=BACKGROUND_COLOR)
