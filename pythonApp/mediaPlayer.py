@@ -1,10 +1,6 @@
 import vlc
 
-
-BACKGROUND_COLOR = "#2b2b2b"
-FOREGROUND_COLOR = "#d9d9d9"
 MEDIA_ROOT = "/home/user/Music/"
-IMAGE_PATH = "images/mediaPlayer/"
 
 
 class MediaPlayer:
@@ -13,9 +9,9 @@ class MediaPlayer:
     paused = False
 
 
-    def __init__(self):
-        return
-
+    def __init__(self, music_path, start_playing):
+        global MEDIA_ROOT
+        MEDIA_ROOT = music_path
 
     def play(self):
         self.paused = False

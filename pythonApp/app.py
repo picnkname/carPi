@@ -2,6 +2,7 @@ from enum import Enum
 from tkinter import *
 import subprocess as sp
 import time
+import json
 
 import mediaPlayer as mediaPlayer
 
@@ -14,6 +15,7 @@ Aap = Enum("Aap", "ALL ALBUM PLAYLIST ARTIST")
 RepeatMode = Enum("RepeatMode", "OFF ALL ONE")
 
 class RootApp:
+    use_defaults = True
     root = None
     mp = None
     song_info = None
@@ -71,8 +73,29 @@ class RootApp:
 
 
     def __init__(self):
+        global IMAGE_PATH
+        global BACKGROUND_COLOR
+        global FOREGROUND_COLOR
+
+        defaults = json.load(open("defaults.json"))
+        IMAGE_PATH        = defaults["image path"]
+        BACKGROUND_COLOR  = defaults["background color"]
+        FOREGROUND_COLOR  = defaults["foreground color"]
+        self.use_defaults = defaults["use defaults"]
+        self.hotspot      = defaults["hotspot"]
+        self.aux          = defaults["aux"]
+        self.mp_controls  = defaults["show mp"]
+        self.shuffle_mode = defaults["shuffle"]
+        self.aap_mode     = Aap.ALL      if defaults["menu mode"] == "ALL"      else \
+                            Aap.ALBUM    if defaults["menu mode"] == "ALBUM"    else \
+                            Aap.PLAYLIST if defaults["menu mode"] == "PLAYLIST" else \
+                            Aap.ARTIST
+        self.repeat_mode  = RepeatMode.ALL if defaults["repeat"] == "ALL" else \
+                            RepeatMode.OFF if defaults["repeat"] == "OFF" else \
+                            RepeatMode.ONE
+        self.change_vol(defaults["volume"])
+        self.mp = mediaPlayer.MediaPlayer(defaults["music path"], defaults["play"])
         self.root = Tk()
-        self.mp = mediaPlayer.MediaPlayer()
         self.song_info = StringVar()
         self.clock_time = StringVar()
         self.draw_everything(True)
@@ -287,7 +310,7 @@ class RootApp:
 
     def draw_everything(self, first_draw=False):
         self.root.configure(bg=BACKGROUND_COLOR)
-        self.root.minsize(width=796, height=200)
+        self.root.minsize(width=796, height=204)
         self.root.resizable(width=False, height=True)
         self.root.title("carPi GUI")
 
