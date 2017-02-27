@@ -41,8 +41,6 @@ class MediaPlayer:
         self.playlists.sort()
         self.artists.sort()
 
-        print(list(open(MEDIA_ROOT + "boa.artist", 'r')))
-
     def play(self):
         self.paused = False
         # self.current_track.play()
