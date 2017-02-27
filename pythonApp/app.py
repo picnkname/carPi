@@ -11,7 +11,7 @@ FOREGROUND_COLOR = "#d9d9d9"
 IMAGE_PATH = "images/"
 
 Aap = Enum("Aap", "ALL ALBUM PLAYLIST ARTIST")
-
+RepeatMode = Enum("RepeatMode", "OFF ALL ONE")
 
 class RootApp:
     root = None
@@ -23,6 +23,8 @@ class RootApp:
     mp_controls = True
     aux = False
     aap_mode = Aap.ALL
+    shuffle_mode = False
+    repeat_mode = RepeatMode.OFF
 
     status_frame = None
     hotspot_image = None
@@ -54,6 +56,7 @@ class RootApp:
     mp_shuffle_button = None
     mp_repeat_button_image = None
     mp_repeat_button = None
+    mp_artwork_image = None
     mp_artwork = None
     mp_aap_frame1 = None
     mp_aap_frame2 = None
@@ -117,7 +120,6 @@ class RootApp:
         self.mp.prev()
 
     def play_pause(self):
-        self.play_pause_button.config(image=PhotoImage(file=IMAGE_PATH + ("pause.gif" if self.mp.paused else "play.gif")))
         if self.mp.paused:
             self.mp.play()
         else:
@@ -129,7 +131,6 @@ class RootApp:
 
     def toggle_aux(self):
         self.aux = not self.aux
-        self.aux_button.config(image=PhotoImage(file=IMAGE_PATH + ("aux-on.gif" if self.aux else "aux-off.gif")))
         self.draw_media_control_frame()
 
     def play_selected_track(self):
@@ -139,10 +140,14 @@ class RootApp:
         return
 
     def shuffle(self):
-        return
+        self.shuffle_mode = not self.shuffle_mode
+        self.draw_mp_buttons_controls_frame()
 
     def repeat(self):
-        return
+        self.repeat_mode = RepeatMode.ALL if self.repeat_mode == RepeatMode.OFF else \
+                           RepeatMode.OFF if self.repeat_mode == RepeatMode.ONE else \
+                           RepeatMode.ONE
+        self.draw_mp_buttons_controls_frame()
 
     def aap_all(self):
         self.aap_mode = Aap.ALL
@@ -245,13 +250,17 @@ class RootApp:
             self.mp_psaapp_button.pack(fill=X)
             self.mp_sr_frame = Frame(self.mp_buttons_controls_frame, bg=BACKGROUND_COLOR)
             self.mp_sr_frame.pack(fill=X)
-            # self.mp_shuffle_button_image = PhotoImage(file=IMAGE_PATH + "shuffle.gif")
-            # self.mp_repeat_button_image  = PhotoImage(file=IMAGE_PATH + "repeat.gif")
-            self.mp_shuffle_button = Button(self.mp_sr_frame, command=self.shuffle, text="Shuffle")
-            self.mp_repeat_button  = Button(self.mp_sr_frame, command=self.repeat,  text="Repeat")
+            self.mp_shuffle_button_image = PhotoImage(file=IMAGE_PATH + "shuffle-on.gif") if self.shuffle_mode else \
+                                           PhotoImage(file=IMAGE_PATH + "shuffle-off.gif")
+            self.mp_repeat_button_image  = PhotoImage(file=IMAGE_PATH + "repeat-off.gif") if self.repeat_mode == RepeatMode.OFF else \
+                                           PhotoImage(file=IMAGE_PATH + "repeat-all.gif") if self.repeat_mode == RepeatMode.ALL else \
+                                           PhotoImage(file=IMAGE_PATH + "repeat-one.gif")
+            self.mp_shuffle_button = Button(self.mp_sr_frame, command=self.shuffle, image=self.mp_shuffle_button_image)
+            self.mp_repeat_button  = Button(self.mp_sr_frame, command=self.repeat,  image=self.mp_repeat_button_image)
             self.mp_shuffle_button.pack(side=LEFT, fill=X, expand=True)
             self.mp_repeat_button .pack(side=LEFT, fill=X, expand=True)
-            self.mp_artwork = Label(self.mp_buttons_controls_frame, text="\n[insert]\n[artwork]\n[here]\n")
+            self.mp_artwork_image = PhotoImage(file=IMAGE_PATH + "noArtwork.gif")
+            self.mp_artwork = Label(self.mp_buttons_controls_frame, image=self.mp_artwork_image)
             self.mp_artwork.pack()
             self.mp_aap_frame1 = Frame(self.mp_buttons_controls_frame, bg=BACKGROUND_COLOR)
             self.mp_aap_frame2 = Frame(self.mp_buttons_controls_frame, bg=BACKGROUND_COLOR)
