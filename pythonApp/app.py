@@ -21,6 +21,7 @@ class RootApp:
     clock_time = None
     volume = 0
     hotspot = False
+    internet = False
     mp_controls = True
     aux = False
     aap_mode = Aap.ALL
@@ -29,7 +30,11 @@ class RootApp:
     status_frame = None
     hotspot_image = None
     hotspot_button = None
+    gps_image = None
+    gps_button = None
     clock_label = None
+    internet_image = None
+    internet_button = None
     power_off_image = None
     power_button = None
 
@@ -104,9 +109,25 @@ class RootApp:
         self.hotspot = not self.hotspot
         self.draw_status_frame()
 
+    def toggle_gps(self):
+        if self.mp_controls:
+            self.mp_control_frame.pack_forget()
+            self.mp_control_frame.destroy()
+            self.root.geometry("796x495")
+        else:
+            self.mp_control_frame = Frame(self.root, bg=BACKGROUND_COLOR)
+            self.mp_control_frame.pack(fill=BOTH)
+            self.root.geometry("796x1500")
+        self.mp_controls = not self.mp_controls
+        self.draw_mp_buttons_controls_frame(True)
+
     def update_clock(self):
         self.clock_time.set(time.strftime("%I:%M:%S"))
         self.root.after(1000, self.update_clock)
+
+    def toggle_internet(self):
+        self.root.geometry("796x1500" if self.internet else "796x204")
+        self.internet = not self.internet
 
     @staticmethod
     def power_off():
@@ -229,18 +250,28 @@ class RootApp:
         if not first_draw:
             self.hotspot_button.pack_forget()
             self.hotspot_button.destroy()
+            self.gps_button.pack_forget()
+            self.gps_button.destroy()
             self.clock_label.pack_forget()
             self.clock_label.destroy()
+            self.internet_button.pack_forget()
+            self.internet_button.destroy()
             self.power_button.pack_forget()
             self.power_button.destroy()
-        self.hotspot_image = PhotoImage(file=IMAGE_PATH + ("hotspot-on.gif" if self.hotspot else "hotspot-off.gif"))
+        self.hotspot_image   = PhotoImage(file=IMAGE_PATH + ("hotspot-on.gif" if self.hotspot else "hotspot-off.gif"))
+        self.gps_image       = PhotoImage(file=IMAGE_PATH + "gps.gif")
+        self.internet_image  = PhotoImage(file=IMAGE_PATH + "internet.gif")
         self.power_off_image = PhotoImage(file=IMAGE_PATH + "power.gif")
-        self.hotspot_button = Button(self.status_frame, command=self.toggle_hotspot, image=self.hotspot_image)
-        self.clock_label = Label(self.status_frame, textvariable=self.clock_time, bg=BACKGROUND_COLOR, fg=FOREGROUND_COLOR, font=("Arial", 52))
-        self.power_button = Button(self.status_frame, command=self.power_off, image=self.power_off_image)
-        self.hotspot_button.pack(side=LEFT)
-        self.power_button.pack(side=RIGHT)
-        self.clock_label.pack(side=TOP, fill=BOTH)
+        self.hotspot_button  = Button(self.status_frame, command=self.toggle_hotspot, image=self.hotspot_image)
+        self.gps_button      = Button(self.status_frame, command=self.toggle_gps, image=self.gps_image)
+        self.clock_label     = Label(self.status_frame, textvariable=self.clock_time, bg=BACKGROUND_COLOR, fg=FOREGROUND_COLOR, font=("Arial", 52))
+        self.internet_button = Button(self.status_frame, command=self.toggle_internet, image=self.internet_image)
+        self.power_button    = Button(self.status_frame, command=self.power_off, image=self.power_off_image)
+        self.hotspot_button .pack(side=LEFT)
+        self.gps_button     .pack(side=LEFT)
+        self.power_button   .pack(side=RIGHT)
+        self.internet_button.pack(side=RIGHT)
+        self.clock_label    .pack(side=TOP, fill=BOTH)
 
     def draw_media_control_frame(self, first_draw=False):
         if not first_draw:

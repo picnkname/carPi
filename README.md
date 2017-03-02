@@ -4,6 +4,9 @@ I will update this with useful information once this project is in a usable stat
 
 ##### Image Credits:
  * wifi by Gregor Cresnar from the Noun Project
+ * GPS by Gregor Cresnar from the Noun Project
+ * Globe by Gregor Cresnar from the Noun Project
+ * Power by Gregor Cresnar from the Noun Project
  * video-player by Garrett Knoll from the Noun Project
  * Headphone Jack by Lloyd Humphreys from the Noun Project
  * Shuffle by H Alberto Gongora from the Noun Project
