@@ -142,6 +142,14 @@ class MediaPlayer:
         for i in track_indexes:
             self.current_tracks.append((playlist_file[3 * i].strip(" \n"), playlist_file[3 * i + 1].strip(" \n")))
 
+    def _find_track_album(self, track_name):
+        for album in self.albums:
+            album_track_names = os.listdir(MEDIA_ROOT + album)
+            for name in album_track_names:
+                if _get_track_name(name) == track_name:
+                    return album, name
+        return None
+
     def play(self):
         if self.current_track_index > -1:
             self._play()
@@ -160,9 +168,10 @@ class MediaPlayer:
             self._prev_track()
 
     def play_track(self, album, track):
+        if album is None:
+            album, track = self._find_track_album(track)
         self._play_init()
-        # FIXME:  Add case for album == None
-        self.current_tracks[0] = album + "/" + track
+        self.current_tracks.append((album, track))
         self._play()
 
     def play_album(self, album):
