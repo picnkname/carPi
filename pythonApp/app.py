@@ -141,9 +141,10 @@ class RootApp:
 
     def prev(self):
         self.mp.prev()
+        self.draw_media_control_frame()
 
     def play_pause(self):
-        if self.mp.paused:
+        if self.mp.not_playing:
             self.mp.play()
         else:
             self.mp.pause()
@@ -151,6 +152,7 @@ class RootApp:
 
     def skip(self):
         self.mp.skip()
+        self.draw_media_control_frame()
 
     def toggle_aux(self):
         self.aux = not self.aux
@@ -162,7 +164,9 @@ class RootApp:
         self.draw_media_control_frame()
 
     def play_selected_aap(self):
-        if self.aap_mode == Aap.ALBUM:
+        if self.aap_mode == Aap.ALL:
+            self.mp.play_all()
+        elif self.aap_mode == Aap.ALBUM:
             self.mp.play_album(self.mp_aap_listbox.get(ACTIVE))
         else:
             self.mp.play_playlist(None if self.aap_mode == Aap.ALL else self.mp_aap_listbox.get(ACTIVE),
@@ -170,6 +174,7 @@ class RootApp:
         self.draw_media_control_frame()
 
     def shuffle(self):
+        # TODO:  Make toggling this mid playlist work logically
         self.mp.shuffle = not self.mp.shuffle
         self.draw_mp_buttons_controls_frame()
 
@@ -251,7 +256,7 @@ class RootApp:
             self.aux_button.destroy()
         self.toggle_mp_button_image = PhotoImage(file=IMAGE_PATH + "media.gif")
         self.prev_button_image = PhotoImage(file=IMAGE_PATH + "prev.gif")
-        self.play_pause_button_image = PhotoImage(file=IMAGE_PATH + ("play.gif" if self.mp.paused else "pause.gif"))
+        self.play_pause_button_image = PhotoImage(file=IMAGE_PATH + ("play.gif" if self.mp.not_playing else "pause.gif"))
         self.skip_button_image = PhotoImage(file=IMAGE_PATH + "skip.gif")
         self.aux_button_image = PhotoImage(file=IMAGE_PATH + ("aux-on.gif" if self.aux else "aux-off.gif"))
         self.toggle_mp_button = Button(self.media_control_frame, command=self.toggle_mp_controls, image=self.toggle_mp_button_image)

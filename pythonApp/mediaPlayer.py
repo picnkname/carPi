@@ -15,6 +15,7 @@ def _check_name_start(name, num_dig):
     return name[0:num_dig].isdigit() and name[num_dig] == ' '
 
 def _get_track_name(name):
+    # TODO:  Make this not suck
     name = name[2:] if _check_name_start(name, 1) else \
            name[3:] if _check_name_start(name, 2) else \
            name[4:] if _check_name_start(name, 3) else \
@@ -24,7 +25,7 @@ def _get_track_name(name):
 
 class MediaPlayer:
     root = None
-    paused = True
+    not_playing = True
     repeat = RepeatMode.OFF
     shuffle = False
     current_track = None
@@ -60,7 +61,7 @@ class MediaPlayer:
 
     def _play_checker(self):
         current_uuid = self.current_track_uuid
-        while (not self.paused) and (current_uuid == self.current_track_uuid) and (self.current_track_index != -1):
+        while (not self.not_playing) and (current_uuid == self.current_track_uuid) and (self.current_track_index != -1):
             if self.current_track is None:
                 self._next_track()
                 self._play()
@@ -70,9 +71,10 @@ class MediaPlayer:
         self.current_track.stop()
         self.current_track = None
         self.current_track_index = -1
+        self.not_playing = True
 
     def _play(self):
-        self.paused = False
+        self.not_playing = False
         if self.current_track is None:
             self.current_track = vlc.MediaPlayer(MEDIA_ROOT + self.current_tracks[self.current_track_index][0] +
                                                         "/" + self.current_tracks[self.current_track_index][1])
@@ -86,7 +88,7 @@ class MediaPlayer:
         self._play()
 
     def _pause(self):
-        self.paused = True
+        self.not_playing = True
         if self.current_track is not None:
             self.current_track.pause()
 
@@ -143,6 +145,8 @@ class MediaPlayer:
     def play(self):
         if self.current_track_index > -1:
             self._play()
+        else:
+            self.play_all()
 
     def pause(self):
         self._pause()
@@ -175,7 +179,12 @@ class MediaPlayer:
         self._play_init()
         for album in self.albums:
             self._init_album(album)
+        if self.shuffle:
+            random.shuffle(self.current_tracks)
         self._play()
+
+    def is_queued(self):
+        return self.current_track_index > -1
 
     def get_albums(self):
         return self.albums
