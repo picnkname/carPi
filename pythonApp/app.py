@@ -12,7 +12,6 @@ FOREGROUND_COLOR = "#d9d9d9"
 IMAGE_PATH = "images/"
 
 Aap = Enum("Aap", "ALL ALBUM PLAYLIST ARTIST")
-RepeatMode = Enum("RepeatMode", "OFF ALL ONE")
 
 class RootApp:
     use_defaults = True
@@ -25,8 +24,6 @@ class RootApp:
     mp_controls = True
     aux = False
     aap_mode = Aap.ALL
-    shuffle_mode = False
-    repeat_mode = RepeatMode.OFF
     tracklist_update_delay = 0
 
     status_frame = None
@@ -91,17 +88,13 @@ class RootApp:
         self.hotspot        = defaults["hotspot"]
         self.aux            = defaults["aux"]
         self.mp_controls    = defaults["show mp"]
-        self.shuffle_mode   = defaults["shuffle"]
         self.track_up_delay = defaults["tracklist update delay"]
         self.aap_mode       = Aap.ALL      if defaults["menu mode"] == "ALL"      else \
                               Aap.ALBUM    if defaults["menu mode"] == "ALBUM"    else \
                               Aap.PLAYLIST if defaults["menu mode"] == "PLAYLIST" else \
                               Aap.ARTIST
-        self.repeat_mode    = RepeatMode.ALL if defaults["repeat"] == "ALL" else \
-                              RepeatMode.OFF if defaults["repeat"] == "OFF" else \
-                              RepeatMode.ONE
         self.change_vol(defaults["volume"])
-        self.mp = mediaPlayer.MediaPlayer(defaults["music path"], defaults["play"])
+        self.mp = mediaPlayer.MediaPlayer(defaults["music path"], defaults["shuffle"], defaults["repeat"])
         self.root = Tk()
         self.song_info = StringVar()
         self.clock_time = StringVar()
@@ -164,22 +157,26 @@ class RootApp:
         self.draw_media_control_frame()
 
     def play_selected_track(self):
-        self.mp.play_track(self.mp_aap_listbox.get(ACTIVE), self.mp_aap_tracks_listbox.get(ACTIVE))
+        self.mp.play_track(None if self.aap_mode == Aap.ALL else self.mp_aap_listbox.get(ACTIVE),
+                           self.mp_aap_tracks_listbox.get(ACTIVE))
+        self.draw_media_control_frame()
 
     def play_selected_aap(self):
         if self.aap_mode == Aap.ALBUM:
             self.mp.play_album(self.mp_aap_listbox.get(ACTIVE))
         else:
-            self.mp.play_playlist(None if self.aap_mode == Aap.ALL else self.mp_aap_listbox.get(ACTIVE), self.aap_mode == Aap.ARTIST)
+            self.mp.play_playlist(None if self.aap_mode == Aap.ALL else self.mp_aap_listbox.get(ACTIVE),
+                                  self.aap_mode == Aap.ARTIST)
+        self.draw_media_control_frame()
 
     def shuffle(self):
-        self.shuffle_mode = not self.shuffle_mode
+        self.mp.shuffle = not self.mp.shuffle
         self.draw_mp_buttons_controls_frame()
 
     def repeat(self):
-        self.repeat_mode = RepeatMode.ALL if self.repeat_mode == RepeatMode.OFF else \
-                           RepeatMode.OFF if self.repeat_mode == RepeatMode.ONE else \
-                           RepeatMode.ONE
+        self.mp.repeat = mediaPlayer.RepeatMode.ALL if self.mp.repeat == mediaPlayer.RepeatMode.OFF else \
+                              mediaPlayer.RepeatMode.OFF if self.mp.repeat == mediaPlayer.RepeatMode.ONE else \
+                              mediaPlayer.RepeatMode.ONE
         self.draw_mp_buttons_controls_frame()
 
     def aap_all(self):
@@ -254,7 +251,7 @@ class RootApp:
             self.aux_button.destroy()
         self.toggle_mp_button_image = PhotoImage(file=IMAGE_PATH + "media.gif")
         self.prev_button_image = PhotoImage(file=IMAGE_PATH + "prev.gif")
-        self.play_pause_button_image = PhotoImage(file=IMAGE_PATH + ("pause.gif" if self.mp.paused else "play.gif"))
+        self.play_pause_button_image = PhotoImage(file=IMAGE_PATH + ("play.gif" if self.mp.paused else "pause.gif"))
         self.skip_button_image = PhotoImage(file=IMAGE_PATH + "skip.gif")
         self.aux_button_image = PhotoImage(file=IMAGE_PATH + ("aux-on.gif" if self.aux else "aux-off.gif"))
         self.toggle_mp_button = Button(self.media_control_frame, command=self.toggle_mp_controls, image=self.toggle_mp_button_image)
@@ -308,10 +305,10 @@ class RootApp:
             self.mp_psaapp_button.pack(fill=X)
             self.mp_sr_frame = Frame(self.mp_buttons_controls_frame, bg=BACKGROUND_COLOR)
             self.mp_sr_frame.pack(fill=X)
-            self.mp_shuffle_button_image = PhotoImage(file=IMAGE_PATH + "shuffle-on.gif") if self.shuffle_mode else \
+            self.mp_shuffle_button_image = PhotoImage(file=IMAGE_PATH + "shuffle-on.gif") if self.mp.shuffle else \
                                            PhotoImage(file=IMAGE_PATH + "shuffle-off.gif")
-            self.mp_repeat_button_image  = PhotoImage(file=IMAGE_PATH + "repeat-off.gif") if self.repeat_mode == RepeatMode.OFF else \
-                                           PhotoImage(file=IMAGE_PATH + "repeat-all.gif") if self.repeat_mode == RepeatMode.ALL else \
+            self.mp_repeat_button_image  = PhotoImage(file=IMAGE_PATH + "repeat-off.gif") if self.mp.repeat == mediaPlayer.RepeatMode.OFF else \
+                                           PhotoImage(file=IMAGE_PATH + "repeat-all.gif") if self.mp.repeat == mediaPlayer.RepeatMode.ALL else \
                                            PhotoImage(file=IMAGE_PATH + "repeat-one.gif")
             self.mp_shuffle_button = Button(self.mp_sr_frame, command=self.shuffle, image=self.mp_shuffle_button_image)
             self.mp_repeat_button  = Button(self.mp_sr_frame, command=self.repeat,  image=self.mp_repeat_button_image)

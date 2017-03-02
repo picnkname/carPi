@@ -7724,7 +7724,7 @@ if __name__ == '__main__':
             sys.exit(1)
         player = instance.media_player_new()
         player.set_media(media)
-        player.play()
+        player._play()
 
         # Some marquee examples.  Marquee requires '--sub-source marq' in the
         # Instance() call above, see <http://www.videolan.org/doc/play-howto/en/ch04.html>
@@ -7806,7 +7806,7 @@ if __name__ == '__main__':
             echo_position = not echo_position
 
         keybindings = {
-            ' ': player.pause,
+            ' ': player._pause,
             '+': sec_forward,
             '-': sec_backward,
             '.': frame_forward,

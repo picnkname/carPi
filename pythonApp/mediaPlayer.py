@@ -1,32 +1,49 @@
 import os
+import random
+import threading
+import time
+import uuid
+from enum import Enum
+
 import vlc
 
 MEDIA_ROOT = "/home/user/Music/"
 
-def check_name_start(name, num_dig):
+RepeatMode = Enum("RepeatMode", "OFF ALL ONE")
+
+def _check_name_start(name, num_dig):
     return name[0:num_dig].isdigit() and name[num_dig] == ' '
 
-def get_track_name(name):
-    name = name[2:] if check_name_start(name, 1) else \
-           name[3:] if check_name_start(name, 2) else \
-           name[4:] if check_name_start(name, 3) else \
+def _get_track_name(name):
+    name = name[2:] if _check_name_start(name, 1) else \
+           name[3:] if _check_name_start(name, 2) else \
+           name[4:] if _check_name_start(name, 3) else \
            name
     return name.rsplit(".", 1)[0]
 
 
 class MediaPlayer:
     root = None
-    paused = False
+    paused = True
+    repeat = RepeatMode.OFF
+    shuffle = False
     current_track = None
+    current_track_index = -1
+    current_track_uuid = None
+    current_tracks = []
     albums = []
     playlists = []
     artists = []
 
-    def __init__(self, music_path, start_playing):
+    def __init__(self, music_path, shuffle, repeat):
         global MEDIA_ROOT
 
-        MEDIA_ROOT = music_path
-        music = os.listdir(MEDIA_ROOT)
+        MEDIA_ROOT   = music_path
+        music        = os.listdir(MEDIA_ROOT)
+        self.shuffle = shuffle
+        self.repeat  = RepeatMode.ALL if repeat == "ALL" else \
+                       RepeatMode.OFF if repeat == "OFF" else \
+                       RepeatMode.ONE
         for name in music:
             if os.path.isdir(MEDIA_ROOT + name):
                 self.albums.append(name)
@@ -41,54 +58,134 @@ class MediaPlayer:
         self.playlists.sort()
         self.artists.sort()
 
-    def play(self):
+    def _play_checker(self):
+        current_uuid = self.current_track_uuid
+        while (not self.paused) and (current_uuid == self.current_track_uuid):
+            time.sleep(.1)
+            if self.current_track is None:
+                self._next_track()
+                self._play()
+
+    def _kill_playing(self):
+        self.current_track.stop()
+        self.current_track = None
+        self.current_track_index = -1
+
+    def _play(self):
         self.paused = False
-        # self.current_track.play()
+        if self.current_track is None:
+            self.current_track = vlc.MediaPlayer(MEDIA_ROOT + self.current_tracks[self.current_track_index])
+        self.current_track.play()
+        self.current_track_uuid = uuid.uuid1()
+        threading.Thread(target=self._play_checker).start()
+
+    def _new_play(self):
+        self.current_track.stop()
+        self.current_track = None
+        self._play()
+
+    def _pause(self):
+        self.paused = True
+        if self.current_track is not None:
+            self.current_track.pause()
+
+    def _next_track(self):
+        self.current_track_index += 1
+        if self.current_track_index < len(self.current_tracks):
+            self._new_play()
+        else:
+            if self.repeat:
+                self.current_track_index = 0
+                self._new_play()
+            else:
+                self._kill_playing()
+
+    def _prev_track(self):
+        if self.current_track_index == 0:
+            if self.repeat:
+                self.current_track_index = len(self.current_tracks) - 1
+                self._new_play()
+            else:
+                self._kill_playing()
+        else:
+            self.current_track_index -= 1
+            self._new_play()
+
+    def _play_init(self):
+        self.current_tracks = []
+        self.current_track_index = 0
+
+    def _init_album(self, album):
+        track_names = os.listdir(MEDIA_ROOT + album)
+        track_indexes = random.sample(range(0, len(track_names)), len(track_names)) if self.shuffle else \
+                        list(range(0, len(track_names)))
+        for i in track_indexes:
+            self.current_tracks.append(album + "/" + track_names[i])
+
+    def _init_playlist(self, playlist, is_artist):
+        playlist_tracks = open(playlist + ".artist" if is_artist else ".playlist").readlines()
+        track_indexes = random.sample(range(0, len(playlist_tracks)), len(playlist_tracks)) if self.shuffle else \
+            list(range(0, len(playlist_tracks)))
+        for i in track_indexes:
+            self.current_tracks.append(playlist_tracks[i])
+
+    def play(self):
+        self._play()
 
     def pause(self):
-        self.paused = True
-        # self.current_track.pause()
-
-    def play_track(self, album, track):
-        print(album + " -> " + track)
-
-    def play_album(self, album):
-        print(album)
-
-    def play_playlist(self, playlist, is_artist=False):
-        print(playlist)
+        self._pause()
 
     def skip(self):
-        return
+        self._next_track()
 
     def prev(self):
-        return
+        self._prev_track()
+
+    def play_track(self, album, track):
+        self._play_init()
+        # FIXME:  Add case for album == None
+        self.current_tracks[0] = album + "/" + track
+        self._play()
+
+    def play_album(self, album):
+        self._play_init()
+        self._init_album(album)
+        self._play()
+
+    def play_playlist(self, playlist, is_artist=False):
+        self._play_init()
+        self._init_playlist(playlist, is_artist)
+        self._play()
+
+    def play_all(self):
+        self._play_init()
+        for album in self.albums:
+            self._init_album(album)
+        self._play()
 
     def get_albums(self):
         return self.albums
 
     def get_playlists(self, is_artist=False):
-        return list(map(get_track_name, self.artists if is_artist else self.playlists))
+        return list(map(_get_track_name, self.artists if is_artist else self.playlists))
 
     def get_all_tracks(self):
         all_tracks = []
         for track_list in list(map(lambda album: os.listdir(MEDIA_ROOT + album), self.albums)):
             for track in track_list:
-                all_tracks.append(get_track_name(track))
+                all_tracks.append(_get_track_name(track))
         all_tracks.sort()
         return all_tracks
 
     @staticmethod
     def get_album_tracks(name):
-        return list(map(get_track_name, sorted(os.listdir(MEDIA_ROOT + name))))
+        return list(map(_get_track_name, sorted(os.listdir(MEDIA_ROOT + name))))
 
     @staticmethod
     def get_playlist_tracks(name, is_artist=False):
-        return list(map(lambda track: get_track_name(track),
+        return list(map(lambda track: _get_track_name(track),
                         sorted(list(map(lambda n: n.rsplit("/", 1)[1],
                                         open(MEDIA_ROOT + name + "." + ("artist" if is_artist else "playlist"), 'r'))))))
 
     def get_track_info(self):
-        title, album, artist = "", "", ""
-        title, album, artist = str(title).strip(" \n"), str(album).strip(" \n"), str(artist).strip(" \n")
-        return title, album, artist
+        return "" if self.current_track_index == -1 else self.current_tracks[self.current_track_index % len(self.current_tracks)], "", ""
