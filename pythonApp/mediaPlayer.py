@@ -60,11 +60,11 @@ class MediaPlayer:
 
     def _play_checker(self):
         current_uuid = self.current_track_uuid
-        while (not self.paused) and (current_uuid == self.current_track_uuid):
-            time.sleep(.1)
+        while (not self.paused) and (current_uuid == self.current_track_uuid) and (self.current_track_index != -1):
             if self.current_track is None:
                 self._next_track()
                 self._play()
+            time.sleep(.1)
 
     def _kill_playing(self):
         self.current_track.stop()
@@ -74,7 +74,8 @@ class MediaPlayer:
     def _play(self):
         self.paused = False
         if self.current_track is None:
-            self.current_track = vlc.MediaPlayer(MEDIA_ROOT + self.current_tracks[self.current_track_index])
+            self.current_track = vlc.MediaPlayer(MEDIA_ROOT + self.current_tracks[self.current_track_index][0] +
+                                                        "/" + self.current_tracks[self.current_track_index][1])
         self.current_track.play()
         self.current_track_uuid = uuid.uuid1()
         threading.Thread(target=self._play_checker).start()
@@ -90,26 +91,36 @@ class MediaPlayer:
             self.current_track.pause()
 
     def _next_track(self):
-        self.current_track_index += 1
-        if self.current_track_index < len(self.current_tracks):
-            self._new_play()
+        if self.repeat == RepeatMode.ONE:
+            self.current_track.stop()
+            self.current_track.play()
         else:
-            if self.repeat:
-                self.current_track_index = 0
+            self.current_track_index += 1
+            if self.current_track_index < len(self.current_tracks):
                 self._new_play()
             else:
-                self._kill_playing()
+                if self.repeat == RepeatMode.ALL:
+                    self.current_track_index = 0
+                    self._new_play()
+                else:
+                    self._kill_playing()
 
     def _prev_track(self):
-        if self.current_track_index == 0:
-            if self.repeat:
-                self.current_track_index = len(self.current_tracks) - 1
-                self._new_play()
-            else:
-                self._kill_playing()
+        if self.repeat == RepeatMode.ONE:
+            self.current_track.stop()
+            self.current_track.play()
         else:
             self.current_track_index -= 1
-            self._new_play()
+            if self.current_track_index == -1:
+                if self.repeat == RepeatMode.ALL:
+                    self.current_track_index = len(self.current_tracks) - 1
+                    self._new_play()
+                else:
+                    self._kill_playing()
+            elif self.current_track_index > -1:
+                self._new_play()
+            else:
+                self.current_track_index = -1
 
     def _play_init(self):
         self.current_tracks = []
@@ -120,26 +131,29 @@ class MediaPlayer:
         track_indexes = random.sample(range(0, len(track_names)), len(track_names)) if self.shuffle else \
                         list(range(0, len(track_names)))
         for i in track_indexes:
-            self.current_tracks.append(album + "/" + track_names[i])
+            self.current_tracks.append((album, track_names[i]))
 
     def _init_playlist(self, playlist, is_artist):
-        playlist_tracks = open(playlist + ".artist" if is_artist else ".playlist").readlines()
-        track_indexes = random.sample(range(0, len(playlist_tracks)), len(playlist_tracks)) if self.shuffle else \
-            list(range(0, len(playlist_tracks)))
+        playlist_file = open(MEDIA_ROOT + playlist + (".artist" if is_artist else ".playlist"), 'r').readlines()
+        track_indexes = random.sample(range(0, len(playlist_file) // 3), len(playlist_file) // 3) if self.shuffle else \
+                        list(range(0, len(playlist_file) // 3))
         for i in track_indexes:
-            self.current_tracks.append(playlist_tracks[i])
+            self.current_tracks.append((playlist_file[3 * i].strip(" \n"), playlist_file[3 * i + 1].strip(" \n")))
 
     def play(self):
-        self._play()
+        if self.current_track_index > -1:
+            self._play()
 
     def pause(self):
         self._pause()
 
     def skip(self):
-        self._next_track()
+        if self.current_track_index > -1:
+            self._next_track()
 
     def prev(self):
-        self._prev_track()
+        if self.current_track_index > -1:
+            self._prev_track()
 
     def play_track(self, album, track):
         self._play_init()
@@ -183,9 +197,13 @@ class MediaPlayer:
 
     @staticmethod
     def get_playlist_tracks(name, is_artist=False):
-        return list(map(lambda track: _get_track_name(track),
-                        sorted(list(map(lambda n: n.rsplit("/", 1)[1],
-                                        open(MEDIA_ROOT + name + "." + ("artist" if is_artist else "playlist"), 'r'))))))
+        playlist_tracks = []
+        playlist_file = list(open(MEDIA_ROOT + name + "." + ("artist" if is_artist else "playlist"), 'r'))
+        for i in range(1, len(playlist_file), 3):
+            playlist_tracks.append(playlist_file[i])
+        return list(map(lambda track: _get_track_name(track), sorted(playlist_tracks)))
 
     def get_track_info(self):
-        return "" if self.current_track_index == -1 else self.current_tracks[self.current_track_index % len(self.current_tracks)], "", ""
+        return "" if self.current_track_index == -1 else self.current_tracks[self.current_track_index][1], \
+               "" if self.current_track_index == -1 else self.current_tracks[self.current_track_index][0], \
+               ""
