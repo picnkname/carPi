@@ -12,5 +12,6 @@
   "show mp"               : true,
   "menu mode"             : "ALL",
   "shuffle"               : true,
-  "repeat"                : "ALL"
+  "repeat"                : "ALL",
+  "listbox width"         : 30
 }

@@ -10,6 +10,7 @@ import mediaPlayer as mediaPlayer
 BACKGROUND_COLOR = "#2b2b2b"
 FOREGROUND_COLOR = "#d9d9d9"
 IMAGE_PATH = "images/"
+LISTBOX_WIDTH = 25
 
 Aap = Enum("Aap", "ALL ALBUM PLAYLIST ARTIST")
 
@@ -89,6 +90,7 @@ class RootApp:
         IMAGE_PATH          = defaults["image path"]
         BACKGROUND_COLOR    = defaults["background color"]
         FOREGROUND_COLOR    = defaults["foreground color"]
+        LISTBOX_WIDTH       = defaults["listbox width"]
         self.use_defaults   = defaults["use defaults"]
         self.hotspot        = defaults["hotspot"]
         self.aux            = defaults["aux"]
@@ -142,6 +144,12 @@ class RootApp:
 
     def update_track_info(self):
         (title, album, artist) = self.mp.get_track_info()
+        if len(title) > 50:
+            title = title[:50] + " >>>"
+        if len(album) > 50:
+            album = album[:50] + " >>>"
+        if len(artist) > 50:
+            artist = artist[:50] + " >>>"
         self.song_info.set("\n" +
                            ("[No Title Data]\n" if title == "" else title + "\n") +
                            ("[No Album Data]\n" if album == "" else album + "\n") +
@@ -350,6 +358,7 @@ class RootApp:
             self.mp_repeat_button  = Button(self.mp_sr_frame, command=self.repeat,  image=self.mp_repeat_button_image)
             self.mp_shuffle_button.pack(side=LEFT, fill=X, expand=True)
             self.mp_repeat_button .pack(side=LEFT, fill=X, expand=True)
+            # TODO:  Add artwork loading stuff
             self.mp_artwork_image = PhotoImage(file=IMAGE_PATH + "noArtwork.gif")
             self.mp_artwork = Label(self.mp_buttons_controls_frame, image=self.mp_artwork_image)
             self.mp_artwork.pack()
@@ -375,8 +384,8 @@ class RootApp:
     def draw_mp_listboxes(self):
         self.mp_aap_listbox_scrollbar        = Scrollbar(self.mp_control_frame, orient=VERTICAL, width=30, bg=BACKGROUND_COLOR, highlightcolor=FOREGROUND_COLOR)
         self.mp_aap_tracks_listbox_scrollbar = Scrollbar(self.mp_control_frame, orient=VERTICAL, width=30, bg=BACKGROUND_COLOR, highlightcolor=FOREGROUND_COLOR)
-        self.mp_aap_listbox        = Listbox(self.mp_control_frame, yscrollcommand=self.mp_aap_listbox_scrollbar.set,        width=26, height=100, bg=BACKGROUND_COLOR, fg=FOREGROUND_COLOR, font=("Arial", 14))
-        self.mp_aap_tracks_listbox = Listbox(self.mp_control_frame, yscrollcommand=self.mp_aap_tracks_listbox_scrollbar.set, width=25, height=100, bg=BACKGROUND_COLOR, fg=FOREGROUND_COLOR, font=("Arial", 14))
+        self.mp_aap_listbox        = Listbox(self.mp_control_frame, yscrollcommand=self.mp_aap_listbox_scrollbar.set,        width=LISTBOX_WIDTH, height=100, bg=BACKGROUND_COLOR, fg=FOREGROUND_COLOR, font=("Arial", 14))
+        self.mp_aap_tracks_listbox = Listbox(self.mp_control_frame, yscrollcommand=self.mp_aap_tracks_listbox_scrollbar.set, width=LISTBOX_WIDTH, height=100, bg=BACKGROUND_COLOR, fg=FOREGROUND_COLOR, font=("Arial", 14))
         self.mp_aap_listbox.bind("<ButtonRelease-1>", self.switch_aap_track_listbox_content)
         self.mp_aap_tracks_listbox_scrollbar.config(command=self.mp_aap_tracks_listbox.yview)
         self.mp_aap_listbox_scrollbar       .config(command=self.mp_aap_listbox.yview)

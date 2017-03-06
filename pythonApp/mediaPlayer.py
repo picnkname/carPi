@@ -11,16 +11,20 @@ MEDIA_ROOT = "/home/user/Music/"
 
 RepeatMode = Enum("RepeatMode", "OFF ALL ONE")
 
-def _check_name_start(name, num_dig):
-    return name[0:num_dig].isdigit() and name[num_dig] == ' '
-
 def _get_track_name(name):
-    # TODO:  Make this not suck
-    name = name[2:] if _check_name_start(name, 1) else \
-           name[3:] if _check_name_start(name, 2) else \
-           name[4:] if _check_name_start(name, 3) else \
-           name
-    return name.rsplit(".", 1)[0]
+    if name[0].isdigit():
+        i = 0
+        while i < len(name):
+            if name[i].isdigit() or name[i] == ' ' or name[i] == '-' or name[i] == '_': i += 1
+            else: break
+        name = name[i:]
+    while True:
+        temp = name.rsplit(".", 1)
+        if len(temp) > 1 and (temp[1] == "mp3" or temp[1] == "flac" or temp[1] == "m4a" or temp[1] == "wav" or temp[1] == "wma" or temp[1] == "ogg" or temp[1] == "aiff" or temp[1] == "aac"):
+            name = temp[0]
+        else:
+            break
+    return name
 
 
 class MediaPlayer:
@@ -35,10 +39,10 @@ class MediaPlayer:
     albums = []
     playlists = []
     artists = []
+    track_artists = {}
 
     def __init__(self, music_path, shuffle, repeat):
         global MEDIA_ROOT
-
         MEDIA_ROOT   = music_path
         music        = os.listdir(MEDIA_ROOT)
         self.shuffle = shuffle
@@ -52,12 +56,17 @@ class MediaPlayer:
             file = name.rsplit(".", 1)
             if len(file) > 1:
                 if file[1] == "playlist":
-                    self.playlists.append(name)
+                    self.playlists.append(file[0])
                 elif file[1] == "artist":
-                    self.artists.append(name)
+                    self.artists.append(file[0])
         self.albums.sort()
         self.playlists.sort()
         self.artists.sort()
+        for artist in self.artists:
+            artist_file = open(MEDIA_ROOT + artist + ".artist", 'r').readlines()
+            for i in range(len(artist_file) // 3):
+                self.track_artists[artist_file[3 * i + 1].strip(" \n")] = artist
+        print(self.track_artists)
 
     def _play_checker(self):
         current_uuid = self.current_track_uuid
@@ -219,9 +228,10 @@ class MediaPlayer:
         playlist_file = list(open(MEDIA_ROOT + name + "." + ("artist" if is_artist else "playlist"), 'r'))
         for i in range(1, len(playlist_file), 3):
             playlist_tracks.append(playlist_file[i])
-        return list(map(lambda track: _get_track_name(track), sorted(playlist_tracks)))
+        return list(map(lambda track: _get_track_name(track.strip(" \n")), sorted(playlist_tracks)))
 
     def get_track_info(self):
-        return "" if self.current_track_index == -1 else self.current_tracks[self.current_track_index][1], \
+        return "" if self.current_track_index == -1 else _get_track_name(self.current_tracks[self.current_track_index][1]), \
                "" if self.current_track_index == -1 else self.current_tracks[self.current_track_index][0], \
-               ""
+               "" if self.current_track_index == -1 or not self.current_tracks[self.current_track_index][1] in self.track_artists \
+                  else self.track_artists[self.current_tracks[self.current_track_index][1]]
