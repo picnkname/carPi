@@ -28,6 +28,8 @@ def _get_track_name(name):
 
 
 class MediaPlayer:
+    # TODO:  Add support for a normal music directory layout
+    # TODO:  Add importer
     root = None
     not_playing = True
     repeat = RepeatMode.OFF
@@ -66,7 +68,6 @@ class MediaPlayer:
             artist_file = open(MEDIA_ROOT + artist + ".artist", 'r').readlines()
             for i in range(len(artist_file) // 3):
                 self.track_artists[artist_file[3 * i + 1].strip(" \n")] = artist
-        print(self.track_artists)
 
     def _play_checker(self):
         current_uuid = self.current_track_uuid

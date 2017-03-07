@@ -21,13 +21,14 @@ cp /home/pi/carPi/configsAndScripts/config.txt /boot/config.txt
 cp /home/pi/carPi/configsAndScripts/autologin.conf /etc/systemd/system/getty@tty1.service.d/autologin.conf
 
 # Install the required stuff
-apt install htop mate-core mate-desktop-environment xserver-xorg xinit xinput python-tk screenfetch network-manager-gnome gpsd gpsd-clients python-gps python3
+apt install htop mate-core mate-desktop-environment xserver-xorg xinit xinput python-tk screenfetch network-manager-gnome gpsd gpsd-clients python-gps python3 vlc pavucontrol
 
 # Check the following in ~/startup.sh:
 # "xinput --list" Then find input device, in this case it is 'BYZHYYZHY By ZHY851'
 
 # Put in "/etc/NetworkManager/NetworkManager.conf" and "/etc/NetworkManager/NetworkManager.conf"
 # Change screensaver settings, wifi/network settings, time, and add startup.sh to the startup stuff in settings
+# Change sound output
 # I had to change timezone settings:
 cp /usr/share/zoneinfo/America/Indiana/Indianapolis /etc/localtime
 

@@ -25,6 +25,7 @@ class RootApp:
     internet = False
     mp_controls = True
     aux = False
+    aux_id = 0
     aap_mode = Aap.ALL
     tracklist_update_delay = 0
 
@@ -85,6 +86,7 @@ class RootApp:
         global IMAGE_PATH
         global BACKGROUND_COLOR
         global FOREGROUND_COLOR
+        global LISTBOX_WIDTH
 
         defaults = json.load(open("defaults.json"))
         IMAGE_PATH          = defaults["image path"]
@@ -133,6 +135,7 @@ class RootApp:
 
     @staticmethod
     def power_off():
+        # TODO:  Add state saving
         sp.call(["sudo", "shutdown", "-h", "now"])
 
     def change_vol(self, new_vol):
@@ -185,6 +188,10 @@ class RootApp:
 
     def toggle_aux(self):
         self.aux = not self.aux
+        if self.aux:
+            self.aux_id = sp.check_output(["pactl", "load-module", "module-loopback", "latency_msec=10"])
+        else:
+            sp.call(["pactl", "unload-module", str(self.aux_id)[2:len(str(self.aux_id)) - 3]])
         self.draw_media_control_frame()
 
     def play_selected_track(self):

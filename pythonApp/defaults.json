@@ -13,5 +13,5 @@
   "menu mode"             : "ALL",
   "shuffle"               : true,
   "repeat"                : "ALL",
-  "listbox width"         : 30
+  "listbox width"         : 25
 }
