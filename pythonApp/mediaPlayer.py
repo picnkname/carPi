@@ -70,6 +70,7 @@ class MediaPlayer:
                 self.track_artists[artist_file[3 * i + 1].strip(" \n")] = artist
 
     def _play_checker(self):
+        # FIXME: This works in my Ubuntu VM and not on the Pi
         current_uuid = self.current_track_uuid
         while (not self.not_playing) and (current_uuid == self.current_track_uuid) and (self.current_track_index != -1):
             if self.current_track is None:

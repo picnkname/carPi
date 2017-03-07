@@ -18,6 +18,8 @@ cp /home/pi/carPi/configsAndScripts/.bash_profile /home/pi/.bash_profile
 cp /home/pi/carPi/configsAndScripts/startup.sh /home/pi/startup.sh
 sudo su
 cp /home/pi/carPi/configsAndScripts/config.txt /boot/config.txt
+cp /home/pi/carPi/configsAndScripts/interfaces /etc/network/interfaces
+cp /home/pi/carPi/configsAndScripts/NetworkManager.conf /etc/NetworkManager/NetworkManager.conf
 cp /home/pi/carPi/configsAndScripts/autologin.conf /etc/systemd/system/getty@tty1.service.d/autologin.conf
 
 # Install the required stuff
